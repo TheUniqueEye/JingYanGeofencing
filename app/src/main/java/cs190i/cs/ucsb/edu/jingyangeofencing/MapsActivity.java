@@ -12,6 +12,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -31,6 +32,7 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -71,6 +73,9 @@ public class MapsActivity extends FragmentActivity
     private PendingIntent geoFencePendingIntent;
     private final int GEOFENCE_REQ_CODE = 0;
 
+    // KEY
+    private static final String mKey = "google_maps_key";
+
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place/nearbysearch";
     private static final String OUT_JSON = "/json";
     private static final String LOCATION = "?location=";
@@ -79,7 +84,6 @@ public class MapsActivity extends FragmentActivity
     private static final String DETAILED_PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place/details";
     private static final String PLACE_ID = "?placeid=";
     private static final int mRadius = 500;
-    private static final String mKey = "mKey";
     private static final float GEOFENCE_RADIUS_IN_METERS = 25.0f;
     private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = 60 * 60 * 1000;
 
@@ -87,6 +91,10 @@ public class MapsActivity extends FragmentActivity
     ArrayList<Geofence> mGeofenceList;
     String place_id_current = null;
 
+    public float mCameraZoom;
+    public double mCameraPositionLat;
+    public double mCameraPositionLng;
+    //public ArrayList<? extends HashMap<String, String>> mResultList;
 
 
     @Override
@@ -146,18 +154,23 @@ public class MapsActivity extends FragmentActivity
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker on Campus and move the camera
-        iniLocation = new LatLng(34.4140, -119.8489);
+        // Handling save state
+        if(mCameraPositionLat!=0){
+            iniLocation = new LatLng(mCameraPositionLat,mCameraPositionLng);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(iniLocation, mCameraZoom));
+        }else{
+            // Add a marker on Campus and move the camera
+            iniLocation = new LatLng(34.4140, -119.8489);
 
-        if (getCurrentLocation() != null) {
-            iniLocation = getCurrentLocation();
+            if (getCurrentLocation() != null) {
+                iniLocation = getCurrentLocation();
+            }
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(iniLocation, 17.0f));
         }
-
         currentMarker = mMap.addMarker(new MarkerOptions()
                 .position(iniLocation)
                 .title("Current Location")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))); // customize color
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(iniLocation, 17.0f));
         mMap.setOnMapLoadedCallback(this);
         mMap.setOnInfoWindowClickListener(this);
 
@@ -306,9 +319,9 @@ public class MapsActivity extends FragmentActivity
                                 // create path
                                 mMap.addCircle(new CircleOptions()
                                         .center(currentLocation)
-                                        .radius(2)
+                                        .radius(1)
                                         .strokeColor(Color.TRANSPARENT)
-                                        .fillColor(Color.BLACK));
+                                        .fillColor(Color.GRAY));
                                 // move current Marker
                                 currentMarker.setPosition(currentLocation);
 
@@ -342,7 +355,7 @@ public class MapsActivity extends FragmentActivity
 
     public boolean requestGetNearbyPlace(LatLng l) throws IOException, JSONException {
 
-        //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&key=my_key
+        //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&key=Google_API_KEY
 
         StringBuilder sb = new StringBuilder(PLACES_API_BASE);
         sb.append(OUT_JSON);
@@ -487,6 +500,30 @@ public class MapsActivity extends FragmentActivity
 
     @Override
     public void onResult(@NonNull Status status) {
-        Log.e("onResult", "onResult()");
+        //Log.d("onResult", "onResult()");
+    }
+
+    // -----------------------------------------------------------------------------------------------
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putFloat("CameraZoom", mMap.getCameraPosition().zoom);
+        savedInstanceState.putDouble("CameraPositionLatitude", mMap.getCameraPosition().target.latitude);
+        savedInstanceState.putDouble("CameraPositionLongitude", mMap.getCameraPosition().target.longitude);
+        //savedInstanceState.putParcelableArrayList("POIs", (ArrayList<? extends Parcelable>) resultList);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mCameraZoom = savedInstanceState.getFloat("CameraZoom");
+        mCameraPositionLat = savedInstanceState.getDouble("CameraPositionLatitude");
+        mCameraPositionLng = savedInstanceState.getDouble("CameraPositionLongitude");
+        //mResultList = savedInstanceState.getParcelableArrayList("POIs");
+        Log.d("CameraZoom_GET",""+ mCameraZoom);
+        Log.d("CameraPositionLat_GET",""+ mCameraPositionLat);
+        Log.d("CameraPositionLng_GET",""+ mCameraPositionLng);
+        //Log.d("mResultList_GET",""+ mResultList);
     }
 }

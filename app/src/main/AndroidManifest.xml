@@ -33,7 +33,8 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -42,7 +43,8 @@
         </activity>
 
         <activity
-            android:name=".WebViewActivity"/>
+            android:name=".WebViewActivity"
+            android:configChanges="orientation|screenSize"/>
 
         <service android:name=".GeofenceTrasitionService"/>
 

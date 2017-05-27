@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.NotificationCompat;
@@ -19,6 +21,8 @@ import com.google.android.gms.location.GeofencingEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.support.v4.app.NotificationCompat.PRIORITY_MAX;
+
 /**
  * Created by EYE on 26/05/2017.
  */
@@ -27,6 +31,7 @@ public class GeofenceTrasitionService extends IntentService {
 
     private static final String TAG = GeofenceTrasitionService.class.getSimpleName();
     public static final int GEOFENCE_NOTIFICATION_ID = 0;
+    public String current_point_of_interest;
 
     public GeofenceTrasitionService() {
         super(TAG);
@@ -72,10 +77,10 @@ public class GeofenceTrasitionService extends IntentService {
             status = "Entering ";
         else if (geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT)
             status = "Exiting ";
-        return status + TextUtils.join(", ", triggeringGeofencesList);
+        current_point_of_interest = TextUtils.join(", ", triggeringGeofencesList);
+        Log.d("current_point",""+current_point_of_interest);
+        return status + "Point of Interest";
     }
-
-
 
     // Send a notification
     private void sendNotification(String msg) {
@@ -103,13 +108,15 @@ public class GeofenceTrasitionService extends IntentService {
     private Notification createNotification(String msg, PendingIntent notificationPendingIntent) {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this);
         notificationBuilder
-                .setSmallIcon(R.drawable.ic_arrow_back_white_24dp)
+                .setSmallIcon(R.drawable.ic_transfer_within_a_station_white_24dp)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_transfer_within_a_station_white_24dp))
                 .setColor(Color.RED)
                 .setContentTitle(msg)
-                .setContentText("Geofence Notification!")
+                .setContentText(current_point_of_interest)
                 .setContentIntent(notificationPendingIntent)
                 .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE | Notification.DEFAULT_SOUND)
-                .setAutoCancel(true);
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
         return notificationBuilder.build();
     }
 
